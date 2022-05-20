@@ -130,6 +130,19 @@ END
 GRANT EXECUTE, REFERENCES ON async.sp_DocflowApplyMethodAsync TO [MACROBANK WORKGROUP]
 GO
 
+CREATE OR ALTER PROC async.sp_DocflowApplyMethodByGuidAsync @DocumentId INT, @MethodGuid NVARCHAR(64), @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT
+AS
+BEGIN
+  SET NOCOUNT ON;
+  DECLARE @MethodId INT;
+  SELECT @MethodId = (SELECT ID FROM DocPathMethods dpm WHERE dpm.MethodGUID = @MethodGuid);
+  EXEC async.sp_DocflowApplyMethodAsync @DocumentId = @DocumentId, @MethodId = @MethodId, @LockWaitMs = @LockWaitMs, @execGroup = @execGroup, @groupId = @groupId OUT
+END
+  GO
+
+GRANT EXECUTE, REFERENCES ON async.sp_DocflowApplyMethodByGuidAsync TO [MACROBANK WORKGROUP]
+GO
+
 
 /*
 DECLARE @groupId UNIQUEIDENTIFIER;
