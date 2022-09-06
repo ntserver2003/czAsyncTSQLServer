@@ -84,6 +84,25 @@ BEGIN
 
     IF @TranCount = 0
       COMMIT TRANSACTION;
+
+    -- Next
+    IF @rc > 0 BEGIN
+      DECLARE @DocumentID_Next INT, @MethodID_Next INT, @LockWaitMs_Next INT, @Next_Next NVARCHAR(MAX);
+      SELECT @DocumentID_Next = f.DocumentId
+            ,@MethodID_Next = f.MethodId
+            ,@LockWaitMs_Next = f.LockWaitMs
+            ,@Next_Next = f.Next FROM async.f_DocFlowApplyMethodParams_table(@Next) f;
+      IF @DocumentID_Next > 0 BEGIN
+        DECLARE @GroupId_Next UNIQUEIDENTIFIER;
+        EXEC async.sp_DocflowApplyMethodAsync @DocumentID = @DocumentID_Next
+                                             ,@MethodID = @MethodID_Next
+                                             ,@LockWaitMs = @LockWaitMs_Next
+                                             ,@groupId = @GroupId_Next OUT
+        -- Для связки со сл. заданием
+        UPDATE async.ExecResults SET next_group_id = @GroupId_Next
+          WHERE queued_id = @asyncCallerTask;
+      END;
+    END;
   END TRY
   BEGIN CATCH
   -- debug    SET @ErrMsg = 'XACT_STATE() =' + STR(XACT_STATE()) + ', @TranCount=' + STR(@TranCount) + ', @@trancount=' + STR(@@trancount);
@@ -123,7 +142,8 @@ BEGIN
                           ,@execGroup = @execGroup
                           ,@group_id = @groupId OUT
                           ,@task_id = @taskId OUT
-  UPDATE async.ExecResults SET DocumentId = @DocumentId, MethodId = @MethodId WHERE task_id = @taskId;
+                          ,@MethodId = @MethodId
+                          ,@DocumentId = @DocumentId  
 END
   GO
 

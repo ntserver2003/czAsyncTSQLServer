@@ -3,7 +3,9 @@ CREATE OR ALTER PROCEDURE async.[sp_ExecInvoke] @sentence NVARCHAR(MAX) = NULL,
                                               @extra_info NVARCHAR(MAX) = NULL,
                                               @execGroup BIT = NULL,
                                               @group_id UNIQUEIDENTIFIER = NULL OUTPUT,
-                                              @task_id UNIQUEIDENTIFIER = NULL OUTPUT
+                                              @task_id UNIQUEIDENTIFIER = NULL OUTPUT,
+                                              @methodId INT = NULL, -- MB MethodId
+                                              @documentId INT = NULL -- MB DocumentId
 AS
 BEGIN
     ------------------------------------------------------------------------
@@ -77,14 +79,18 @@ BEGIN
                                                           extra_info,
                                                           next_sentence,
                                                           queued_id,
-                                                          queued_time)
+                                                          queued_time,
+                                                          MethodId,
+                                                          DocumentId)
                             VALUES (@task_id,
                                     @group_id,
                                     @sentence,
                                     @extra_info,
                                     @next_sentence,
                                     @queued_id,
-                                    @queued_time);
+                                    @queued_time,
+                                    @methodId,
+                                    @documentId);
 
                     END
                 ELSE
