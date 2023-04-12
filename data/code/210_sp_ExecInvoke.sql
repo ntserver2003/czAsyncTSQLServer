@@ -5,7 +5,13 @@ CREATE OR ALTER PROCEDURE async.[sp_ExecInvoke] @sentence NVARCHAR(MAX) = NULL,
                                               @group_id UNIQUEIDENTIFIER = NULL OUTPUT,
                                               @task_id UNIQUEIDENTIFIER = NULL OUTPUT,
                                               @methodId INT = NULL, -- MB MethodId
-                                              @documentId INT = NULL -- MB DocumentId
+                                              @documentId INT = NULL, -- MB DocumentId
+                                              /*
+                                              Execute sentence mode. Default: as system user
+                                              0 - as current login
+                                              1 - as system user
+                                              */
+                                              @asSystemUser BIT = 1
 AS
 BEGIN
     ------------------------------------------------------------------------
@@ -81,7 +87,8 @@ BEGIN
                                                           queued_id,
                                                           queued_time,
                                                           MethodId,
-                                                          DocumentId)
+                                                          DocumentId,
+                                                          asLogin)
                             VALUES (@task_id,
                                     @group_id,
                                     @sentence,
@@ -90,7 +97,8 @@ BEGIN
                                     @queued_id,
                                     @queued_time,
                                     @methodId,
-                                    @documentId);
+                                    @documentId,
+                                    IIF(ISNULL(@asSystemUser, 1) = 1, NULL, SUSER_NAME()));
 
                     END
                 ELSE

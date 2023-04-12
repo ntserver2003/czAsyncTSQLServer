@@ -1,4 +1,6 @@
-if object_id('async.ExecResults') IS NULL BEGIN
+declare @objectId INT;
+SET @objectId = object_id('async.ExecResults');
+if @objectId IS NULL BEGIN
   CREATE TABLE async.ExecResults (
       submit_time   DATETIME2
           CONSTRAINT DF_JsAsyncExecResults_submit_time DEFAULT SYSUTCDATETIME() NOT NULL,
@@ -32,3 +34,14 @@ if object_id('async.ExecResults') IS NULL BEGIN
       ON async.ExecResults (DocumentId)
 
 END
+
+IF NOT EXISTS (SELECT 1
+      FROM sys.columns
+      WHERE Name = 'asLogin' AND object_id = @objectId) BEGIN
+
+  ALTER TABLE async.ExecResults
+  ADD asLogin NVARCHAR(256) NULL
+
+END
+
+

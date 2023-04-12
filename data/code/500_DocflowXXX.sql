@@ -65,6 +65,15 @@ BEGIN
       SET @__ErrMsg = @__ErrPrefix + FORMATMESSAGE(N'Parameters error. @DocumentID=%d, @MethodID=%d, @asyncCallerTask=%s', @DocumentID, @MethodID, CAST(@asyncCallerTask AS NVARCHAR(64)));
       THROW 51000, @__ErrMsg, 1;
     END
+  /* -- log vvv
+  declare @__log nvarchar(max)
+  set @__log = formatmessage('SUSER_NAME=%s, USER=%s', SUSER_NAME(), USER)
+  exec log.sp_AddLog @DocumentId = NULL --@DocumentID
+                    ,@Kind = 99
+                    ,@Data = @__log
+                    ,@Level = 2
+  
+  -- log ^^^ */
   -- begin transaction with savepoint
   BEGIN TRY
   DECLARE @TransactionID NVARCHAR(64) = ISNULL(OBJECT_NAME(@@PROCID), '<Dynamic code>' + CONVERT(NVARCHAR(64), NEWID()));
@@ -128,7 +137,7 @@ END
 GRANT EXECUTE, REFERENCES ON async.sp_DocflowApplyMethodInvoke TO [MACROBANK WORKGROUP]
 GO
 
-CREATE OR ALTER PROC async.sp_DocflowApplyMethodAsync @DocumentId INT, @MethodId INT, @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT
+CREATE OR ALTER PROC async.sp_DocflowApplyMethodAsync @DocumentId INT, @MethodId INT, @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT, @asSystemUser BIT = 1
 AS
 BEGIN
   SET NOCOUNT ON;
@@ -143,20 +152,21 @@ BEGIN
                           ,@group_id = @groupId OUT
                           ,@task_id = @taskId OUT
                           ,@MethodId = @MethodId
-                          ,@DocumentId = @DocumentId  
+                          ,@DocumentId = @DocumentId
+                          ,@asSystemUser = @asSystemUser
 END
   GO
 
 GRANT EXECUTE, REFERENCES ON async.sp_DocflowApplyMethodAsync TO [MACROBANK WORKGROUP]
 GO
 
-CREATE OR ALTER PROC async.sp_DocflowApplyMethodByGuidAsync @DocumentId INT, @MethodGuid NVARCHAR(64), @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT
+CREATE OR ALTER PROC async.sp_DocflowApplyMethodByGuidAsync @DocumentId INT, @MethodGuid NVARCHAR(64), @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT, @asSystemUser BIT = 1
 AS
 BEGIN
   SET NOCOUNT ON;
   DECLARE @MethodId INT;
   SELECT @MethodId = (SELECT ID FROM DocPathMethods dpm WHERE dpm.MethodGUID = @MethodGuid);
-  EXEC async.sp_DocflowApplyMethodAsync @DocumentId = @DocumentId, @MethodId = @MethodId, @LockWaitMs = @LockWaitMs, @execGroup = @execGroup, @groupId = @groupId OUT
+  EXEC async.sp_DocflowApplyMethodAsync @DocumentId = @DocumentId, @MethodId = @MethodId, @LockWaitMs = @LockWaitMs, @execGroup = @execGroup, @groupId = @groupId OUT, @asSystemUser = @asSystemUser
 END
   GO
 

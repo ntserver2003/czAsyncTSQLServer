@@ -19,6 +19,7 @@ BEGIN
         , @extra_info NVARCHAR(MAX)
         , @next_sentence NVARCHAR(MAX)
         , @group_id UNIQUEIDENTIFIER
+        , @asLogin NVARCHAR(255)
 
     BEGIN TRY
 
@@ -49,7 +50,8 @@ BEGIN
                             WHERE queued_id = @queued_id;
 
                         SELECT @group_id = group_id,
-                               @extra_info = extra_info
+                               @extra_info = extra_info,
+                               @asLogin = NULLIF(asLogin, '')
                             FROM [async].[ExecResults]
                             WHERE queued_id = @queued_id;
 
@@ -62,7 +64,13 @@ BEGIN
                                 --UPDATE [async].[ExecResults] SET sentence = @sentence WHERE queued_id = @queued_id;
 
                                 BEGIN TRY
-                                    EXEC (@sentence);
+                                    IF @asLogin IS NULL BEGIN
+                                      EXEC (@sentence);
+                                    END ELSE BEGIN
+                                      DECLARE @__sql nvarchar(max);
+                                      SET @__sql = N'EXEC (@sentence) AS LOGIN = ''' + @asLogin +'''';
+                                      EXEC sp_executesql @__sql, N'@sentence as nvarchar(max)', @sentence = @sentence
+                                    END
                                 END TRY
                                 BEGIN CATCH
 
@@ -145,13 +153,14 @@ BEGIN
                                         DECLARE
                                             @next_task_id UNIQUEIDENTIFIER
 
-										set @next_task_id = NULL
+										                    set @next_task_id = NULL
 
                                         EXEC async.sp_ExecInvoke
                                              @sentence = @next_sentence,
                                              @extra_info = @extra_info,
                                              @group_id = @next_group_id OUTPUT,
-                                             @task_id = @next_task_id OUTPUT
+                                             @task_id = @next_task_id OUTPUT,
+                                             @asLogin = @asLogin
 
                                         UPDATE async.ExecResults
                                         SET next_task_id  = @next_task_id,
