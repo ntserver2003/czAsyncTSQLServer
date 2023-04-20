@@ -85,7 +85,7 @@ BEGIN
       BEGIN TRANSACTION @TransactionID;
     END;
     
-    IF @LockWaitMs > 0
+    IF @LockWaitMs > 0 AND OBJECT_ID('lib.spg_GetLock') IS NOT NULL
       EXEC lib.spg_GetLock @DocumentID = @DocumentID, @waitMs = @LockWaitMs
   
     EXEC @rc = dbo.sp_DocflowApplyMethod @DocumentID = @DocumentID
