@@ -88,7 +88,8 @@ BEGIN
                                                           queued_time,
                                                           MethodId,
                                                           DocumentId,
-                                                          asLogin)
+                                                          asLogin,
+                                                          worker)
                             VALUES (@task_id,
                                     @group_id,
                                     @sentence,
@@ -98,7 +99,9 @@ BEGIN
                                     @queued_time,
                                     @methodId,
                                     @documentId,
-                                    IIF(ISNULL(@asSystemUser, 1) = 1, NULL, SUSER_NAME()));
+                                    IIF(ISNULL(@asSystemUser, 1) = 1, NULL, SUSER_NAME()),
+                                    'default'
+                                    );
 
                     END
                 ELSE

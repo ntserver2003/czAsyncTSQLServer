@@ -1,7 +1,12 @@
-declare @objectId INT;
-SET @objectId = object_id('async.ExecResults');
+﻿SET XACT_ABORT ON;
+
+declare @objectId INT, @object SYSNAME;
+SET @object = 'async.ExecResults';
+SET @objectId = object_id(@object);
+
 if @objectId IS NULL BEGIN
   CREATE TABLE async.ExecResults (
+      id INT IDENTITY,
       submit_time   DATETIME2
           CONSTRAINT DF_JsAsyncExecResults_submit_time DEFAULT SYSUTCDATETIME() NOT NULL,
       task_id       UNIQUEIDENTIFIER                                            NOT NULL,
@@ -20,8 +25,7 @@ if @objectId IS NULL BEGIN
       next_group_id UNIQUEIDENTIFIER,
       DocumentId    INT,
       MethodId      INT
-      CONSTRAINT PK__AsyncExe__CA90DA7B4BD51208
-          PRIMARY KEY (submit_time, task_id)
+      ,CONSTRAINT PK_ExecResults_id PRIMARY KEY CLUSTERED (id)
   )
   
   CREATE INDEX [NonClusteredIndex-20180306-130204]
@@ -35,13 +39,29 @@ if @objectId IS NULL BEGIN
 
 END
 
-IF NOT EXISTS (SELECT 1
-      FROM sys.columns
-      WHERE Name = 'asLogin' AND object_id = @objectId) BEGIN
-
+IF COL_LENGTH(@object, 'asLogin') IS NULL BEGIN
   ALTER TABLE async.ExecResults
   ADD asLogin NVARCHAR(256) NULL
-
 END
 
+IF COL_LENGTH(@object, 'id') IS NULL BEGIN
+  ALTER TABLE Async.ExecResults
+    ADD id int IDENTITY
+END
 
+IF EXISTS (
+    SELECT 1
+    FROM sys.key_constraints 
+    WHERE name = 'PK__AsyncExe__CA90DA7B4BD51208'
+    AND parent_object_id = @objectId
+) BEGIN
+  ALTER TABLE Async.ExecResults
+    DROP CONSTRAINT PK__AsyncExe__CA90DA7B4BD51208
+  ALTER TABLE Async.ExecResults
+    ADD CONSTRAINT PK_ExecResults_id PRIMARY KEY CLUSTERED (id)
+END
+
+IF COL_LENGTH(@object, 'worker') IS NULL BEGIN
+  ALTER TABLE async.ExecResults
+    ADD worker VARCHAR(50) NOT NULL DEFAULT 'default'
+END
