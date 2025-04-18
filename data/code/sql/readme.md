@@ -1,0 +1,20 @@
+Включить Service Broker на новой базе
+```sql
+USE [master]
+GO
+ALTER DATABASE [] SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+
+ALTER DATABASE [] SET  ENABLE_BROKER WITH NO_WAIT
+ALTER DATABASE [] SET MULTI_USER
+GO
+
+
+Если восстановили базу на тот же сервер, но с другим именем
+```sql
+USE [master]
+GO
+ALTER DATABASE [] SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+
+ALTER DATABASE [] SET NEW_BROKER
+ALTER DATABASE [] SET MULTI_USER
+GO
