@@ -65,3 +65,8 @@ IF COL_LENGTH(@object, 'worker') IS NULL BEGIN
   ALTER TABLE async.ExecResults
     ADD worker VARCHAR(50) NOT NULL DEFAULT 'default'
 END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE name = 'IDX_ExecResults_queued_id') BEGIN
+    CREATE INDEX IDX_ExecResults_queued_id
+    ON async.ExecResults (queued_id)
+END
