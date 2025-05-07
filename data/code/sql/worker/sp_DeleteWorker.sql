@@ -2,22 +2,17 @@
 as begin
   declare @newExecActivatedName NVARCHAR(128), @newExecQueueName NVARCHAR(128), @newServiceName NVARCHAR(128), @newExecInvoke NVARCHAR(128)
          ,@newDocflowApplyMethodAsync NVARCHAR(128), @newDocflowApplyMethodByGuidAsync NVARCHAR(128)
+         ,@newDocflowApplyMethodInvoke NVARCHAR(128)
   
   SELECT @newExecActivatedName = sp_ExecActivated
         ,@newExecQueueName = ExecQueue
         ,@newServiceName = AsyncExecService
-        ,@newExecInvoke = ExecInvoke
+        ,@newExecInvoke = sp_ExecInvoke
         ,@newDocflowApplyMethodAsync = sp_DocflowApplyMethodAsync
-        ,@newDocflowApplyMethodByGuidAsync = sp_DocflowApplyMethodByGuidAsync FROM (VALUES (
-    --
-    'sp_ExecActivated_' + @worker
-    , 'ExecQueue_' + @worker
-    , 'AsyncExecService_' + @worker
-    , 'ExecInvoke_' + @worker
-    , 'sp_DocflowApplyMethodAsync_' + @worker
-    , 'sp_DocflowApplyMethodByGuidAsync_' + @worker
-    --
-    )) foo (sp_ExecActivated, ExecQueue, AsyncExecService, ExecInvoke, sp_DocflowApplyMethodAsync, sp_DocflowApplyMethodByGuidAsync)
+        ,@newDocflowApplyMethodByGuidAsync = sp_DocflowApplyMethodByGuidAsync
+        ,@newDocflowApplyMethodInvoke = sp_DocflowApplyMethodInvoke
+        --
+        FROM async.f_ObjectNames_table(@worker)
   
   declare @sql nvarchar(max)
   set @sql = 'drop proc if exists async.['+@newExecActivatedName+']'
@@ -32,6 +27,9 @@ as begin
   set @sql = 'drop proc if exists async.['+@newDocflowApplyMethodByGuidAsync+']'
   IF @debug > 0 SELECT @sql sp_DocflowApplyMethodByGuidAsync ELSE EXEC (@sql)
   
+  set @sql = 'drop proc if exists async.['+@newDocflowApplyMethodInvoke+']'
+  IF @debug > 0 SELECT @sql sp_DocflowApplyMethodByGuidAsync ELSE EXEC (@sql)
+
   set @sql = 'drop service '+@newServiceName
   if exists (select 1 from sys.services s where s.name = @newServiceName)
     IF @debug > 0 SELECT @sql Service ELSE EXEC (@sql)

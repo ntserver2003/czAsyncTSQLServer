@@ -8,22 +8,17 @@ BEGIN
     -- new object names
     declare @newExecActivatedName NVARCHAR(128), @newExecQueueName NVARCHAR(128), @newServiceName NVARCHAR(128), @newExecInvoke NVARCHAR(128)
            ,@newDocflowApplyMethodAsync NVARCHAR(128), @newDocflowApplyMethodByGuidAsync NVARCHAR(128)
+           ,@newDocflowApplyMethodInvoke NVARCHAR(128)
   
     SELECT @newExecActivatedName = sp_ExecActivated
           ,@newExecQueueName = ExecQueue
           ,@newServiceName = AsyncExecService
-          ,@newExecInvoke = ExecInvoke
+          ,@newExecInvoke = sp_ExecInvoke
           ,@newDocflowApplyMethodAsync = sp_DocflowApplyMethodAsync
-          ,@newDocflowApplyMethodByGuidAsync = sp_DocflowApplyMethodByGuidAsync FROM (VALUES (
+          ,@newDocflowApplyMethodByGuidAsync = sp_DocflowApplyMethodByGuidAsync
+          ,@newDocflowApplyMethodInvoke = sp_DocflowApplyMethodInvoke
       --
-      'sp_ExecActivated_' + @worker
-      , 'ExecQueue_' + @worker
-      , 'AsyncExecService_' + @worker
-      , 'ExecInvoke_' + @worker
-      , 'sp_DocflowApplyMethodAsync_' + @worker
-      , 'sp_DocflowApplyMethodByGuidAsync_' + @worker
-      --
-      )) foo (sp_ExecActivated, ExecQueue, AsyncExecService, ExecInvoke, sp_DocflowApplyMethodAsync, sp_DocflowApplyMethodByGuidAsync)
+      FROM async.f_ObjectNames_table(@worker)
     
     if exists (select 1 from sys.service_queues where  schema_id = SCHEMA_ID('async') and name = @newExecQueueName)
     begin
@@ -63,6 +58,7 @@ BEGIN
     SET @sql = OBJECT_DEFINITION(OBJECT_ID('async.sp_DocflowApplyMethodAsync'))
     SET @sql = '/* Auto generated. Don''t change */' + CHAR(13) + REPLACE(@sql, 'sp_DocflowApplyMethodAsync', @newDocflowApplyMethodAsync)
     SET @sql = REPLACE(@sql, 'sp_ExecInvoke', @newExecInvoke)
+    SET @sql = REPLACE(@sql, 'sp_DocflowApplyMethodInvoke', @newDocflowApplyMethodInvoke)
     IF @debug > 0
      SELECT @sql sp_DocflowApplyMethodAsync
     ELSE
@@ -83,6 +79,19 @@ BEGIN
       BEGIN
        EXEC (@sql)
        SET @sql = FORMATMESSAGE('GRANT EXECUTE, REFERENCES ON async.%s TO [MACROBANK WORKGROUP]', @newDocflowApplyMethodByGuidAsync)
+       EXEC (@sql)
+      END
+
+    -- Worker sp_DocflowApplyMethodInvoke procedure
+    SET @sql = OBJECT_DEFINITION(OBJECT_ID('async.sp_DocflowApplyMethodInvoke'))
+    SET @sql = '/* Auto generated. Don''t change */' + CHAR(13) + REPLACE(@sql, 'sp_DocflowApplyMethodInvoke', @newDocflowApplyMethodInvoke)
+    SET @sql = REPLACE(@sql, 'sp_DocflowApplyMethodAsync', @newDocflowApplyMethodAsync)
+    IF @debug > 0
+     SELECT @sql sp_DocflowApplyMethodInvoke
+    ELSE
+      BEGIN
+       EXEC (@sql)
+       SET @sql = FORMATMESSAGE('GRANT EXECUTE, REFERENCES ON async.%s TO [MACROBANK WORKGROUP]', @newDocflowApplyMethodInvoke)
        EXEC (@sql)
       END
 
