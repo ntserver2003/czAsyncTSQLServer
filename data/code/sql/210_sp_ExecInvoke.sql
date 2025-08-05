@@ -7,11 +7,17 @@ CREATE OR ALTER PROCEDURE async.[sp_ExecInvoke] @sentence NVARCHAR(MAX) = NULL,
                                               @methodId INT = NULL, -- MB MethodId
                                               @documentId INT = NULL, -- MB DocumentId
                                               /*
+                                              Used if @asLogin is null
                                               Execute sentence mode. Default: as system user
                                               0 - as current login
                                               1 - as system user
                                               */
-                                              @asSystemUser BIT = 1
+                                              @asSystemUser BIT = 1,
+                                              /*
+                                              @asLogin takes more priority than @asSystemUser
+                                              Default: NULL
+                                              */
+                                              @asLogin NVARCHAR(256) = NULL
 AS
 BEGIN
     ------------------------------------------------------------------------
@@ -99,7 +105,9 @@ BEGIN
                                     @queued_time,
                                     @methodId,
                                     @documentId,
-                                    IIF(ISNULL(@asSystemUser, 1) = 1, NULL, SUSER_NAME()),
+                                    ISNULL(@asLogin, 
+                                        IIF(ISNULL(@asSystemUser, 1) = 1, NULL, SUSER_NAME())
+                                        ),
                                     'default'
                                     );
 
