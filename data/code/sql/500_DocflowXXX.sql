@@ -137,7 +137,7 @@ END
 GRANT EXECUTE, REFERENCES ON async.sp_DocflowApplyMethodInvoke TO [MACROBANK WORKGROUP]
 GO
 
-CREATE OR ALTER PROC async.sp_DocflowApplyMethodAsync @DocumentId INT, @MethodId INT, @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT, @asSystemUser BIT = 1
+CREATE OR ALTER PROC Async.sp_DocflowApplyMethodAsync @DocumentId INT, @MethodId INT, @LockWaitMs INT = NULL, @execGroup BIT = NULL, @groupId UNIQUEIDENTIFIER = NULL OUT, @asSystemUser BIT = 1, @nextSentence NVARCHAR(MAX) = NULL
 AS
 BEGIN
   SET NOCOUNT ON;
@@ -147,6 +147,7 @@ BEGIN
 
   DECLARE @taskId UNIQUEIDENTIFIER;
   EXEC async.sp_ExecInvoke @sentence = @sql
+                          ,@next_sentence = @nextSentence
                           ,@extra_info = @context
                           ,@execGroup = @execGroup
                           ,@group_id = @groupId OUT

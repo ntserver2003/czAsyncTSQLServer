@@ -1,3 +1,25 @@
+## Sample
+
+### Sample @nextSentence
+
+```sql
+exec async.sp_DocflowApplyMethodAsync @DocumentId = 24294343, @MethodId = 123
+, @nextSentence = 'update documents set InternalMessage=CAST(GETDATE() AS NVARCHAR(64)) +
+ ''
+ asyncCallerTask: ##asyncCallerTask##
+ asyncGroupCallerId: ##asyncGroupCallerId##
+ asyncCallerErrorNumber: ##asyncCallerErrorNumber##
+ asyncExtraInfo: ##asyncExtraInfo##
+ Docflow error: '' +
+ (SELECT dfel.Errortext FROM DocFlowErrorLog dfel where id = ABS((SELECT er.result FROM async.ExecResults er WHERE er.queued_id = ''##asyncCallerTask##'')))
+ WHERE ID = 24294343'
+
+select top 10 * from async.ExecResults order by id desc
+
+select * from Documents d where id = 24294343
+```
+
+
 ## Workers
 
 ### Создать новый worker
